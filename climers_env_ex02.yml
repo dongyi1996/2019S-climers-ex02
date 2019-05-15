@@ -1,0 +1,12 @@
+name: climers_env_ex02
+channels:
+- defaults
+dependencies:
+  - python=3
+  - numpy
+  - pandas
+  - matplotlib
+  - scipy
+  - statsmodels
+  - netcdf4
+  - xarray
