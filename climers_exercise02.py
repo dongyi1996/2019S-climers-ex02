@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import xarray as xr
 from datetime import datetime
+import statsmodels.api as sm
 
 
 def calc_lagmeans(s, lags):
@@ -111,7 +112,7 @@ def data_overview(data_dir, out_dir):
     prec_temporal_mean.plot()
     plt.axis('equal')
     plt.title('mean_rainfall_trmm_tmpa')
-    plt.savefig(os.path.join(out_dir, 'mean_rainfall_trmm_tmpa.png'), bbox_inches = "tight")
+    plt.savefig(os.path.join(out_dir, 'mean_rainfall_trmm_tmpa.png'), bbox_inches="tight")
     plt.close()
 
     # lets take the average of each month of the year.
@@ -120,14 +121,14 @@ def data_overview(data_dir, out_dir):
     prec_june = prec_monthly_sum[5, :, :]
     prec_june.plot()
     plt.axis('equal')
-    plt.savefig(os.path.join(out_dir, 'mean_rainfall_june_trmm_tmpa.png'), bbox_inches = "tight")
+    plt.savefig(os.path.join(out_dir, 'mean_rainfall_june_trmm_tmpa.png'), bbox_inches="tight")
     plt.close()
     # you can also average multiple axes at once. Lets average over lat/lon to
     # create a single time series for the danube catchment
     prec_ts = prec_temp_subset.mean(('lon', 'lat'))
     prec_ts.plot(label='catchment mean')
     plt.legend()
-    plt.savefig(os.path.join(out_dir, 'mean_rainfall_ts_trmm_tmpa.png'), bbox_inches = "tight")
+    plt.savefig(os.path.join(out_dir, 'mean_rainfall_ts_trmm_tmpa.png'), bbox_inches="tight")
     plt.close()
 
     """
@@ -147,8 +148,68 @@ def data_overview(data_dir, out_dir):
     lagmeans.plot()
     plt.xlabel('Time')
     plt.ylabel('precipitation [mm/hr]')
-    plt.savefig(os.path.join(out_dir, 'trmm_tmpa_precip_lag_averages.png'), bbox_inches = "tight")
+    plt.savefig(os.path.join(out_dir, 'trmm_tmpa_precip_lag_averages.png'), bbox_inches="tight")
     plt.close()
+
+
+def bias(data_dir):
+    # Mask
+    mask_fname = os.path.join(data_dir, 'mask.nc')
+    mask_ds = xr.open_dataset(mask_fname)
+    mask_da = mask_ds['mask']
+
+    # E-OBS dataset
+    eobs_fname = os.path.join(data_dir, 'EOBS_monthly_0d25.nc')
+    eobs_ds = xr.open_dataset(eobs_fname)
+    eobs_prec = eobs_ds['rr']
+    eobs_prec = eobs_prec.transpose('time', 'lat', 'lon')
+    eobs_prec = eobs_prec.sortby(['time', 'lat', 'lon'])
+
+    # CMOPRH dataset
+    cmorph_fname = os.path.join(data_dir, 'CMORPH_monthly_0d25.nc')
+    cmorph_ds = xr.open_dataset(cmorph_fname)
+    cmorph_prec = cmorph_ds['cmorph']
+
+    # "lev" is not needed ?
+    cmorph_prec = cmorph_prec.drop('lev')
+    cmorph_prec = cmorph_prec.transpose('time', 'lat', 'lon', 'lev')
+    cmorph_prec = cmorph_prec.sortby(['time', 'lat', 'lon'])
+
+    # Mask datasets
+    mask_dataarray(eobs_prec, mask_da)
+    mask_dataarray(cmorph_prec, mask_da)
+
+    # Single time series for each data set.
+    cmorph_prec_ts = cmorph_prec.groupby('time').mean()
+    eobs_prec_ts = eobs_prec.groupby('time').mean()
+
+    # Trend analysis
+    y = eobs_prec_ts.values
+    x = list(range(1, len(y) + 1))
+    x = np.reshape(x, (-1, 1))
+    x = sm.add_constant(x)
+    trd = sm.OLS(y, x).fit()
+    eobs_trend = xr.DataArray(trd.predict(), coords=eobs_prec_ts.coords)
+
+    y = cmorph_prec_ts.values
+    x = list(range(1, len(y) + 1))
+    x = np.reshape(x, (-1, 1))
+    x = sm.add_constant(x)
+    trd = sm.OLS(y, x).fit()
+    cmorph_trend = xr.DataArray(trd.predict(), coords=cmorph_prec_ts.coords)
+
+    # Plot data
+    eobs_prec_ts.plot(label='E-OBS')
+    cmorph_prec_ts.plot(label='CMORPH')
+    eobs_trend.plot(label='E-OBS trend')
+    cmorph_trend.plot(label='CMORPH trend')
+    plt.title("Time series of precipitation data")
+    plt.ylabel("Mean precipitation [mm/hr]")
+    plt.xlabel("Time")
+    plt.grid(color='grey', linestyle='--', linewidth=0.5)
+    plt.legend(loc="upper left")
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -167,4 +228,6 @@ if __name__ == '__main__':
         pass
 
     # run the a function showcasing some relevant common python stuff
-    data_overview(data_dir, out_dir)
+    # data_overview(data_dir, out_dir)
+
+    bias(data_dir)
