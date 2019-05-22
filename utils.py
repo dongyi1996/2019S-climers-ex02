@@ -215,10 +215,13 @@ def bias(data_dir):
 if __name__ == '__main__':
     # get directory containing this python file.
     project_dir = os.path.dirname(os.path.realpath(__file__))
+
     # input data directory
     data_dir = os.path.join(project_dir, 'data')
+
     # output directory
     out_dir = os.path.join(project_dir, 'results')
+
     # create the out_dir
     try:
         # try to create it
@@ -228,6 +231,5 @@ if __name__ == '__main__':
         pass
 
     # run the a function showcasing some relevant common python stuff
-    # data_overview(data_dir, out_dir)
-
-    bias(data_dir)
+    data_overview(data_dir, out_dir)
+    #bias(data_dir)
