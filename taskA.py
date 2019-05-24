@@ -91,6 +91,7 @@ def merged_pcp_to_netcdf():
     ds_rain.to_netcdf(path=os.path.join(data_dir, 'RAINFALL_MERGED_monthly_0d25.nc'))
     return None
 
+
 def bias_plots():
     """
     Bias is the difference between the mean values. Compute mean over time

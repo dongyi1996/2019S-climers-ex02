@@ -212,6 +212,43 @@ def bias(data_dir):
     plt.show()
 
 
+def read_nc(fname, data_var, mask=True):
+    """
+    Reader for the netcdf files of exercise 2
+    :param fname: string
+        name of file (including path)
+    :param data_var: string
+        name of the variable you want to read
+    :param mask: Boolean, default=True
+        Whether you want to mask the data with the area of the danube catchment (True) or not (False)
+    :return: xarray.Dataarray
+        dataarray with metadata and data of the data_var
+    """
+    ds = xr.open_dataset(fname)
+    try:
+        ds = ds.rename({'longitude': 'lon', 'latitude': 'lat'})
+    except ValueError:
+        pass
+    try:
+        da = ds[data_var]
+    except KeyError:
+        print('Invalid "data_var". \n Available variables in this netcdf file: ')
+        print(ds.data_vars)
+        raise KeyError
+
+    da = da.squeeze(drop=True)
+    da = da.transpose('time', 'lat', 'lon')
+    da = da.sortby(['time', 'lat', 'lon'])
+    da['time'].values = pd.DatetimeIndex(pd.to_datetime(da['time'].values).date).map(
+        lambda t: t.replace(day=1)).to_numpy()
+
+    if mask:
+        mask_ds = xr.open_dataset(os.path.join(data_dir, 'mask.nc'))
+        mask_da = mask_ds['mask']
+        mask_dataarray(da, mask_da)
+    return da
+
+
 if __name__ == '__main__':
     # get directory containing this python file.
     project_dir = os.path.dirname(os.path.realpath(__file__))
