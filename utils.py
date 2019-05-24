@@ -243,7 +243,8 @@ def read_nc(fname, data_var, mask=True):
         lambda t: t.replace(day=1)).to_numpy()
 
     if mask:
-        mask_ds = xr.open_dataset(os.path.join(data_dir, 'mask.nc'))
+        mask_fname = os.path.join(os.path.dirname(fname), 'mask.nc')
+        mask_ds = xr.open_dataset(mask_fname)
         mask_da = mask_ds['mask']
         mask_dataarray(da, mask_da)
     return da
