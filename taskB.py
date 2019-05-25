@@ -17,8 +17,71 @@ def calc_spi(da):
     """
     calculate SPI for given rainfall DataArray
     """
-    # TODO: maybe implement function for spi to work with different rainfall data sets
-    pass
+    # name of variable
+    var_name = da.var().name
+
+    # basin mean
+    basin_mean = da.groupby('time').mean().to_dataframe()
+
+    # apply gamma fit for each month group
+    gammaparams = (basin_mean.groupby(basin_mean.index.month).apply(stats.gamma.fit))
+
+    # dict to store yearly ppf's per month
+    ppf_per_month = {}
+
+    # get ppf for each month separately
+    for month in gammaparams.index.values:
+        values_of_month = basin_mean[var_name][basin_mean.index.month == month]
+        a, loc, scale = gammaparams[month]
+        cdf = stats.gamma.cdf(values_of_month, a, loc, scale)
+        ppf = stats.norm.ppf(cdf)
+        ppf_per_month[month] = ppf
+
+    # Reconstruction of time series (kann man sicher sauberer/flotter machen)
+    # -------------------------------------------------------------------------
+
+    # create a year index
+    idx = np.arange(basin_mean.index.year[0], basin_mean.index.year[-1] + 1)
+
+    # ppf dict to data frame
+    df = pd.DataFrame.from_dict(ppf_per_month).transpose()
+
+    # reindex to years
+    df.columns = idx
+    df = df.transpose()
+
+    # stack and reset the index
+    stacked = df.stack().reset_index()
+
+    # create index based on year and month multiindex
+    new_idx = pd.to_datetime(stacked.level_0.astype('str') + '-' + stacked.level_1.astype('str') + '-01',
+                             format='%Y-%m-%d')
+    stacked = stacked.set_index(new_idx)
+    stacked = stacked.rename(columns={0: 'SPI'})
+
+    return stacked
+
+
+def plot_spi(stacked, var_name, aggr, save):
+
+    SPI_ts = stacked['SPI']
+
+    ax = SPI_ts.plot(title='SPI time series ({})'.format(aggr), figsize=(10, 5))
+    ax.axhline(0, linestyle='--', color='grey', alpha=0.5)
+    min = SPI_ts.min() * 1.1
+    max = SPI_ts.max() * 1.1
+    ax.set_ylim(min, max)
+    plt.tight_layout()
+
+    if save:
+        SPI_ts.to_csv(os.path.join(out_dir, 'taskB', '{}_basin_avg_SPI_{}.csv'.format(aggr, var_name)), header=False)
+        plt.savefig(
+            os.path.join(out_dir, 'taskB', '{}_SPI_{}.png'.format(aggr, var_name)),
+            bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
+
 
 def calc_spei(da):
     """
@@ -52,62 +115,9 @@ if __name__ == '__main__':
     da_aet = da_aet * (30.)
     da_aet.attrs['units'] = 'mm/month'
     """
+    stacked_trmm = calc_spi(da_trmm)
 
-    # basin mean
-    trmm_basin_mean = da_trmm.groupby('time').mean().to_dataframe()
+    aggr = '48M'
+    stacked_trmm = stacked_trmm.resample(aggr).sum()
 
-    # apply gamma fit for each month group
-    trmm_gammaparams = (trmm_basin_mean
-        .groupby(trmm_basin_mean.index.month)
-        .apply(stats.gamma.fit))
-
-    # dict to store yearly ppf's per month
-    ppf_per_month = {}
-
-    # get ppf for each month separately
-    for month in trmm_gammaparams.index.values:
-        values_of_month = trmm_basin_mean['TRMM'][trmm_basin_mean.index.month == month]
-        cdf = stats.gamma.cdf(values_of_month, trmm_gammaparams[month][0], trmm_gammaparams[month][1], trmm_gammaparams[month][2])
-        ppf = stats.norm.ppf(cdf)
-        ppf_per_month[month] = ppf
-
-    # Reconstruction of time series (kann man sicher sauberer/flotter machen)
-    # -------------------------------------------------------------------------
-
-    # create a year index
-    idx = np.arange(trmm_basin_mean.index.year[0], trmm_basin_mean.index.year[-1] + 1)
-
-    # ppf dict to data frame
-    df = pd.DataFrame.from_dict(ppf_per_month).transpose()
-
-    # reindex to years
-    df.columns = idx
-    df = df.transpose()
-
-    # stack and reset the index
-    stacked = df.stack().reset_index()
-
-    # create index based on year and month multiindex
-    new_idx = pd.to_datetime(stacked.level_0.astype('str') + '-' + stacked.level_1.astype('str') + '-01', format='%Y-%m-%d')
-    stacked = stacked.set_index(new_idx)
-    stacked = stacked.rename(columns={0: 'SPI'})
-
-    # extract SPI and save as .csv
-    SPI_ts = stacked['SPI']
-    SPI_ts.to_csv(os.path.join(out_dir, 'taskB', 'monthly_basin_avg_SPI_TRMM.csv'), header=False)
-
-    # plot monthly SPI
-    ax = SPI_ts.plot(title='SPI time series (1-month)', figsize=(10,5))
-    ax.axhline(0, linestyle='--', color='grey', alpha=0.5)
-    ax.set_ylim(-4,4)
-    plt.tight_layout()
-
-    # save figure
-    plt.savefig(
-        os.path.join(out_dir, 'taskB', 'SPI_TRMM_months_1.png'),
-        bbox_inches="tight")
-    plt.close()
-
-    # Aggregated SPI
-    # -------------------------------------------------------------------------
-    # TODO: ?
+    plot_spi(stacked_trmm, 'TRMM', aggr, True)
