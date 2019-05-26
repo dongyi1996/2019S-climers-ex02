@@ -273,6 +273,13 @@ def plots_taskb(time_scales=[1, 3, 6, 12, 24, 36, 48]):
         p_minus_et = basin_sums['P'] - basin_sums['PET']
         spei = standardized_drought_index(p_minus_et, time_scale=time_scale)
 
+        # save to csv
+        spi.to_csv(os.path.join(out_dir, 'taskB', 'methode_leander',
+                         'SPI_time_scale_{}.csv'.format(time_scale)))
+
+        spei.to_csv(os.path.join(out_dir, 'taskB', 'methode_leander',
+                                'SPEI_time_scale_{}.csv'.format(time_scale)))
+
         # create plot
         # -------------------------------------------------------------------------
         fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10,6))

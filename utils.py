@@ -249,6 +249,28 @@ def read_nc(fname, data_var, mask=True):
         mask_dataarray(da, mask_da)
     return da
 
+def read_csv(infile, parse_col, date_str='%Y-%m-%d'):
+    """
+    Function to read data.
+
+    Parameters
+    ----------
+    infile : str
+        Path to data.
+    parse_col : str
+        Column name of time variable.
+    date_str : str
+        String for datetime conversion.
+
+    returns
+    -------
+    data : pd.DataFrame
+    """
+    def dateparse(x): return pd.datetime.strptime(x, date_str)
+    data = pd.read_csv(infile, parse_dates=[parse_col], date_parser=dateparse)
+    data.index = data[parse_col]
+    return data.drop(parse_col, axis=1)
+
 
 if __name__ == '__main__':
     # get directory containing this python file.
