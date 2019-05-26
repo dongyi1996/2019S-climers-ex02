@@ -7,6 +7,8 @@ import pandas as pd
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 import xarray as xr
+import utils
+
 
 def standardized_drought_index(ts, time_scale):
     """
@@ -28,12 +30,18 @@ def standardized_drought_index(ts, time_scale):
     # apply rolling window
     # -------------------------------------------------------------------------
     if time_scale != 1:
+        # rolling mean (alt von felix)
+        """
         ts_smoothed = (ts
                        .rolling(window=time_scale,
                                min_periods=time_scale,
                                center=False)
                        .mean() # does not matter if mean or sum
                        .dropna())
+        """
+        # lagmean (leander) -> fast gleiche ergebnisse aber macht viel mehr sinn!
+        ts_smoothed = utils.calc_lagmeans(ts, lags=[time_scale])
+        ts_smoothed = ts_smoothed.dropna()
     else:
         ts_smoothed = ts
 
@@ -298,7 +306,7 @@ def plots_taskb(time_scales=[1, 3, 6, 12, 24, 36, 48]):
 
         # save figure
         plt.savefig(
-            os.path.join(out_dir, 'taskB', 'felix',
+            os.path.join(out_dir, 'taskB', 'methode_leander',
                          'taskb_time_scale_{}.png'.format(time_scale)),
             bbox_inches="tight")
         plt.close()
@@ -318,9 +326,9 @@ if __name__ == '__main__':
     # output directory
     out_dir = os.path.join(project_dir, 'results')
 
+    """
     # read input data
     # -------------------------------------------------------------------------
-    """
     da_trmm = utils.read_nc(os.path.join(data_dir,
                                          'TRMM_TMPA_monthly_0d25.nc'),
                             'precipitation')
@@ -336,11 +344,23 @@ if __name__ == '__main__':
     da_aet = utils.read_nc(fname, 'AET')
     da_aet *= (30.)
     da_aet.attrs['units'] = 'mm/month'
+
+    # compute basin sums
+    # -------------------------------------------------------------------------
+    trmm_basin = da_trmm.groupby('time').sum().to_series()
+    trmm_basin = trmm_basin[:'2017-12-01']  # common period with GLEAM
+    trmm_basin.name = 'P'
+
+    pet_basin = da_pet.groupby('time').sum().to_dataframe()
+    aet_basin = da_aet.groupby('time').sum().to_dataframe()
+
+    basin_sums = pd.concat([trmm_basin, pet_basin, aet_basin], axis=1)
     """
 
     # task B plots
     # -------------------------------------------------------------------------
     plots_taskb()
+
 
 
     """
