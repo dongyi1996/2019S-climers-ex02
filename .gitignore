@@ -7,6 +7,8 @@ __pycache__/
 
 *.docx
 
+papers/
+
 # C extensions
 *.so
 
