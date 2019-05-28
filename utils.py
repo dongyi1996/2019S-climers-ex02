@@ -249,6 +249,7 @@ def read_nc(fname, data_var, mask=True):
         mask_dataarray(da, mask_da)
     return da
 
+
 def read_csv(infile, parse_col, date_str='%Y-%m-%d'):
     """
     Function to read data.

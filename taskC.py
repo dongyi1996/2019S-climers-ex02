@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     # SPI and SPEI
     # -------------------------------------------------------------------------
-    aggs = [3, 12, 48]
+    aggs = [3, 6, 12, 24, 36, 48]
 
     spis = []
     speis = []
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # calc correlations and plot
     # -------------------------------------------------------------------------
     corrs = df_merged.corr(method='pearson')
-    corrs.to_csv(os.path.join(out_dir, 'taskC', 'correlation_matrix.csv'))
+    corrs.to_csv(os.path.join(out_dir, 'taskC', 'correlation_matrix_extended.csv'))
 
     # create triangular mask for heatmap
     mask = np.zeros_like(corrs)
@@ -98,6 +98,6 @@ if __name__ == '__main__':
                 cbar_kws=cbar_kws, ax=ax)
     # save
     plt.savefig(
-        os.path.join(out_dir, 'taskC', 'correlation_matrix.png'),
+        os.path.join(out_dir, 'taskC', 'correlation_matrix_extended.png'),
         bbox_inches="tight")
     plt.close()
