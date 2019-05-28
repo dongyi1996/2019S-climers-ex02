@@ -107,40 +107,40 @@ def bias_plots():
     # Spatial BIAS plots
     # -------------------------------------------------------------------------
 
-    # EOBS - CMORPH
-    bias_cmorph = temporal_mean.EOBS - temporal_mean.CMORPH
-    bias_cmorph.name = 'EOBS - CMORPH [mm]'
+    # CMORPH - EOBS
+    bias_cmorph = temporal_mean.CMORPH - temporal_mean.EOBS
+    bias_cmorph.name = 'CMORPH - EOBS [mm]'
     bias_cmorph.plot(cmap='RdBu')
-    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_eobs_cmorph.png'),
+    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_cmorph_eobs.png'),
                 bbox_inches="tight")
     plt.close()
 
-    # EOBS - PERSIANN
-    bias_persiann = temporal_mean.EOBS - temporal_mean.PERSIANN
-    bias_persiann.name = 'EOBS - PERSIANN [mm]'
+    # PERSIANN - EOBS
+    bias_persiann = temporal_mean.PERSIANN - temporal_mean.EOBS
+    bias_persiann.name = 'PERSIANN - EOBS [mm]'
     bias_persiann.plot(cmap='RdBu')
-    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_eobs_persiann.png'),
+    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_persiann_eobs.png'),
                 bbox_inches="tight")
     plt.close()
 
-    # EOBS - TRMM
-    bias_trmm = temporal_mean.EOBS - temporal_mean.TRMM
-    bias_trmm.name = 'EOBS - TRMM [mm]'
+    # TRMM - EOBS
+    bias_trmm = temporal_mean.TRMM - temporal_mean.EOBS
+    bias_trmm.name = 'TRMM - EOBS [mm]'
     bias_trmm.plot(cmap='RdBu')
-    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_eobs_trmm.png'),
+    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_trmm_eobs.png'),
                 bbox_inches="tight")
     plt.close()
 
     # Compute basin average bias
     # -------------------------------------------------------------------------
-    vals_bias_cmorph = bias_cmorph.to_dataframe()['EOBS - CMORPH [mm]'].values
-    vals_bias_persiann = bias_persiann.to_dataframe()['EOBS - PERSIANN [mm]'].values
-    vals_bias_trmm = bias_trmm.to_dataframe()['EOBS - TRMM [mm]'].values
+    vals_bias_cmorph = bias_cmorph.to_dataframe()['CMORPH - EOBS [mm]'].values
+    vals_bias_persiann = bias_persiann.to_dataframe()['PERSIANN - EOBS [mm]'].values
+    vals_bias_trmm = bias_trmm.to_dataframe()['TRMM - EOBS [mm]'].values
     print(vals_bias_cmorph.shape, vals_bias_persiann.shape, vals_bias_trmm.shape)
 
     dict_of_biases = {'CMORPH': vals_bias_cmorph,
-                 'TRMM': vals_bias_trmm,
-                 'PERSIANN': vals_bias_persiann}
+                      'TRMM': vals_bias_trmm,
+                      'PERSIANN': vals_bias_persiann}
 
     df_biases = pd.DataFrame.from_dict(dict_of_biases)
 
@@ -151,7 +151,7 @@ def bias_plots():
     ax.set_ylabel("Bias [mm]")
     ax.axhline(0, linestyle='--', alpha=0.5, color='grey')
 
-    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_boxplot.png'),
+    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_boxplot_new.png'),
                 bbox_inches="tight")
     plt.close()
 
@@ -162,7 +162,7 @@ def bias_plots():
     ax.set_ylabel("Bias [mm]")
     ax.axhline(0, linestyle='--', alpha=0.5, color='grey')
 
-    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_violinplot.png'),
+    plt.savefig(os.path.join(out_dir, 'taskA', 'BIAS_violinplot_new.png'),
                 bbox_inches="tight")
     plt.close()
 
@@ -239,8 +239,8 @@ def corr_plots():
     vals_corr_persiann = corr_persiann.to_dataframe()[corr_persiann.name].values
 
     dict_of_corrs = {'CMORPH': vals_corr_cmorph,
-                      'TRMM': vals_corr_trmm,
-                      'PERSIANN': vals_corr_persiann}
+                     'TRMM': vals_corr_trmm,
+                     'PERSIANN': vals_corr_persiann}
 
     df_corrs = pd.DataFrame.from_dict(dict_of_corrs)
 
@@ -392,7 +392,7 @@ if __name__ == '__main__':
 
     # merge rainfall data into one xr.Dataset object and export to .nc file
     # -------------------------------------------------------------------------
-    merged_pcp_to_netcdf()
+    # merged_pcp_to_netcdf()
 
     # Bias plots
     # -------------------------------------------------------------------------
@@ -400,8 +400,8 @@ if __name__ == '__main__':
 
     # Corr plots
     # -------------------------------------------------------------------------
-    corr_plots()
+    # corr_plots()
 
     # Monthly basin average rainfall comparison
     # -------------------------------------------------------------------------
-    monthly_basin_avg_plot()
+    # monthly_basin_avg_plot()
