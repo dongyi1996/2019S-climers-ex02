@@ -135,7 +135,7 @@ if __name__ == '__main__':
         # AX 1: TWS
         tws_basin['lagmean_{}'.format(time_scale)].plot(ax=axes[1])
         axes[1].set_title('TWS-{}'.format(time_scale))
-        axes[1].set_ylabel('[m3/m3]')
+        axes[1].set_ylabel('[cm]')
         axes[1].axhline(0, linestyle='-', color='darkgrey', alpha=0.5)
 
         # AX 2: Q_harsova
